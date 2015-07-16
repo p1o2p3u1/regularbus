@@ -1,52 +1,27 @@
 from coverage.parser import CodeParser
-import os
 import sys
 
 class SimplePyTracer:
 
     def __init__(self):
+        # This is a function, decide if we need to trace a file
+        self.should_trace = None
+        # This is a dictionary, cache the filename that should trace
         self.should_trace_cache = {}
+        # This is a dictionary, cache the filename that should not trace
         self.should_not_trace_cache = {}
+        # The coverage data
         self.data = {}
+        # File parser cache, cache normal file lines.
         self.parse_cache = {}
 
-    def _should_trace(self, filename, frame):
-        """
-        Decide if we need to trace this file or not. We need to ignore python
-        library files and package files, and only trace the game source files.
-        :param filename: the name of the file
-        :return: True or False
-        """
-        # empty filename shouldn't be traced.
-        if not filename:
-            return False
-
-        # something like <string>
-        if filename.startswith('<'):
-            return False
-
-        # something like .pyc
-        if not filename.endswith(".py"):
-            if filename[-4:-1] == ".py":
-                filename = filename[:-1]
-            elif filename.endswith("$py.class"):  # jython
-                filename = filename[:-9] + ".py"
-
-        # if the filename is not an absolute path
-        if not os.path.isabs(filename):
-            for path in [os.curdir] + sys.path:
-                if path is None:
-                    continue
-                f = os.path.join(path, filename)
-                if os.path.exists(f):
-                    filename = f
-                    break
-
-        # then check if this is lib file
-
-        return None
-
     def _init_trace_file(self, filename, lineno):
+        """
+        here comes a new file that need to trace
+        :param filename: the name of the file
+        :param lineno: first called line number
+        :return: None
+        """
         if filename not in self.data:
             self.data[filename] = {}
         self.data[filename][lineno] = None
@@ -76,7 +51,7 @@ class SimplePyTracer:
                 return self._trace
 
             if filename not in self.should_trace_cache:
-                trace_it = self._should_trace(filename, frame)
+                trace_it = self.should_trace(filename, frame)
                 if trace_it:
                     self.should_trace_cache[filename] = None
                     # we need to trace it
@@ -91,6 +66,10 @@ class SimplePyTracer:
             if filename in self.should_trace_cache:
                 self.data[filename][frame.f_lineno] = None
 
+        return self._trace
+
+    def start(self):
+        sys.settrace(self._trace)
         return self._trace
 
     def _harvest_data(self):
