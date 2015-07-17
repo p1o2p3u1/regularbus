@@ -22,3 +22,7 @@ class RegularBus:
 if __name__ == '__main__':
     b = RegularBus('localhost', 9000)
     b.start_trace()
+    print("trace started")
+    from fibonacci import Fibonacci
+    f = Fibonacci()
+    print f.calc(10)

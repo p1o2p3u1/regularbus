@@ -10,7 +10,7 @@ import json
 class BusStation(WebSocketServerProtocol):
 
     def __init__(self, harvest_data):
-        self.data = {}
+        self.cov_data = {}
         self.timer = None
         self.task = task.LoopingCall(self._collect_data)
         self.harvest_data = harvest_data
@@ -23,7 +23,11 @@ class BusStation(WebSocketServerProtocol):
         self.task.start(1)
 
     def onMessage(self, payload, isBinary):
-        pass
+        sum = 0
+        for i in range(100):
+            sum += i
+        print sum
+        self.sendMessage(bytes(sum), False)
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))
@@ -31,21 +35,12 @@ class BusStation(WebSocketServerProtocol):
         print("send collect data stopped.")
 
     def _collect_data(self):
-        self.data = {
-            "file1.py": {
-                "code": [1, 2, 3, 4, 5],
-                "executed": [1, 2, 3, 4],
-                "missing": [5],
-                "coverage": 0.8
-            }
-        }
-        self.data = self.harvest_data()
+        self.cov_data = self.harvest_data()
         # The ensure_ascii == False option allows the JSON serializer
         # to use Unicode strings. We can do this since we are encoding
         # to UTF8 afterwards anyway. And UTF8 can represent the full
         # Unicode character set.
-        s = json.dumps(self.data, ensure_ascii=False).encode('utf8')
-        print s
+        s = json.dumps(self.cov_data, ensure_ascii=False).encode('utf8')
         self.sendMessage(s, False)
         print("send complete")
 
@@ -68,10 +63,14 @@ class CollectorService:
         self.factory = BusStationFactory(harvest_data, "ws://%s:%d" % (self.server, self.port), debug=debug)
         self.reactor = reactor
         self.reactor.listenTCP(port, self.factory)
+        self.thread = Thread(target=self.reactor.run, args=(False,))
 
     def start(self):
-        Thread(target=self.reactor.run, args=(False,)).start()
+        self.thread.start()
         print("socket service started on %s:%d" % (self.server, self.port))
+
+    def stop(self):
+        pass
 
 if __name__ == "__main__":
 
