@@ -3,6 +3,7 @@ import sys
 import atexit
 import random
 import socket
+import threading
 from tracer import SimplePyTracer
 from coverage.files import FileLocator, TreeMatcher
 from coverage.codeunit import CodeUnit
@@ -37,6 +38,17 @@ class CoverageCollector:
             self.pylib_match = TreeMatcher(self.pylib_dirs)
 
     def start(self):
+        self._start()
+        threading.settrace(self._thread_trace)
+
+    def _thread_trace(self, frame, event, arg):
+        sys.settrace(None)
+        fn = self._start()
+        if fn:
+            fn(frame, event, arg)
+        return fn
+
+    def _start(self):
         self.tracer = SimplePyTracer()
         self.tracer.data = self.data
         self.tracer.should_trace = self._should_trace
@@ -77,12 +89,12 @@ class CoverageCollector:
         filename = self.file_locator.canonical_filename(filename)
         # then check if this is lib file
         if self.pylib_match and self.pylib_match.match(filename):
-            print filename, "This is a library file, ignore trace"
+            print filename, " This is a library file, ignore trace"
             return False
         # then check if this is the coverage package source
         if 0:
             if self.cover_match and self.cover_match.match(filename):
-                print filename, "This is coverage package source"
+                print filename, " This is coverage package source, ignore trace"
                 return False
         # trace it.
         return True

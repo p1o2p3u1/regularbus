@@ -1,6 +1,12 @@
-import time
+# here are some comments
+# blablabla
+"""
+comments
+"""
 class Fibonacci:
-
+    """
+    calculate fibonacci number
+    """
     def __init__(self):
         pass
 
