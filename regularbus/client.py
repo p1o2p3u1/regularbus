@@ -14,6 +14,7 @@ class BusStation(WebSocketServerProtocol):
         self.timer = None
         self.task = task.LoopingCall(self._collect_data)
         self.harvest_data = harvest_data
+        self.interval = 1
 
     def onConnect(self, request):
         print("Client connecting: {0}".format(request.peer))
@@ -24,6 +25,7 @@ class BusStation(WebSocketServerProtocol):
             self.task.start(1)
 
     def onMessage(self, payload, isBinary):
+        print payload
         sum = 0
         for i in range(100):
             sum += i

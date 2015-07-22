@@ -15,14 +15,11 @@ class RegularBus:
             port=port,
             debug=False)
 
-    def start_trace(self):
+    def lets_go(self):
         self.collector.start()
         self.service.start()
 
 if __name__ == '__main__':
     b = RegularBus('localhost', 9000)
-    b.start_trace()
+    b.lets_go()
     print("trace started")
-    from fibonacci import Fibonacci
-    f = Fibonacci()
-    print f.calc(10)
