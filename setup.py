@@ -3,7 +3,7 @@ from distutils.core import setup
 setup(
     name='regularbus',
     packages=['regularbus'],
-    version='0.1',
+    version='0.2',
     description='python coverage test tool',
     author='ting wu',
     author_email='ting.wu@corp.netease.com',
