@@ -121,9 +121,11 @@ class CoverageCollector:
         }
         """
         result = {}
-        for filename, item in self.tracer.parse_cache.iteritems():
-            # lowercase is helpful, also replace windows \\ path separator
-            key = filename.lower().replace('\\', '/')
+        keys = self.tracer.parse_cache.keys()
+        for filename in keys:
+            # replace windows \\ path separator
+            item = self.tracer.parse_cache[filename]
+            key = filename.replace('\\', '/')
             parser = item['parser']
             code = item['code']
             exec1 = self.data.get(filename) or {}
