@@ -20,6 +20,7 @@ class CoverageCollector:
     def __init__(self):
         self.data = {}
         self.tracer = None
+        self.trace_fun = None
         self.file_locator = FileLocator()
         # check where are the libraries
         self.pylib_dirs = []
@@ -42,18 +43,16 @@ class CoverageCollector:
         threading.settrace(self._thread_trace)
 
     def _thread_trace(self, frame, event, arg):
-        sys.settrace(None)
-        fn = self._start()
-        if fn:
-            fn(frame, event, arg)
-        return fn
+        if self.trace_fun is None:
+            self.trace_fun = self._start()
+        return self.trace_fun(frame, event, arg)
 
     def _start(self):
         self.tracer = SimplePyTracer()
         self.tracer.data = self.data
         self.tracer.should_trace = self._should_trace
-        fn = self.tracer.start()
-        return fn
+        self.trace_fun = self.tracer.start()
+        return self.trace_fun
 
     def _should_trace(self, filename, frame):
         """
@@ -104,23 +103,33 @@ class CoverageCollector:
 
     def harvest_data(self):
         """
+        Harvest all the trace data we collected.
+        :return:
         {
-            "file1.py": {
-                "code": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
-                "executed": [1, 2, 3, 4, 5, 6, 7, 8, 9],
-                "missing": [10],
-                "coverage": 0.9
+            "filename1.py": {
+                code: [1, 2, 4, 5, 7, 8]
+                executed: [2, 5, 8],
+                missed: [1, 4, 7]
+                coverage: 0.375
+            },
+            "filename2.py": {
+                code: [..]
+                executed: [..],
+                missed: [1, 2, 3, ...]
+                coverage: 0.8
             }
         }
         """
         result = {}
         for filename, item in self.tracer.parse_cache.iteritems():
+            # lowercase is helpful, also replace windows \\ path separator
+            key = filename.lower().replace('\\', '/')
             parser = item['parser']
             code = item['code']
             exec1 = self.data.get(filename) or {}
             executed = parser.first_lines(exec1)
             missing = code - executed
-            result[filename] = {
+            result[key] = {
                 'code': list(code),
                 'executed': list(executed),
                 'missed': list(missing),

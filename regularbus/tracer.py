@@ -72,38 +72,4 @@ class SimplePyTracer:
         sys.settrace(self._trace)
         return self._trace
 
-    def _harvest_data(self):
-        """
-        Harvest all the trace data we collected.
-        :return:
-        {
-            "filename1.py": {
-                code: [1, 2, 4, 5, 7, 8]
-                executed: [2, 5, 8],
-                missed: [1, 4, 7]
-                coverage: 0.375
-            },
-            "filename2.py": {
-                code: [..]
-                executed: [..],
-                missed: [1, 2, 3, ...]
-                coverage: 0.8
-            }
-        }
-        """
-        result = {}
-        for filename, item in self.parse_cache.iteritems():
-            parser = item['parser']
-            code = item['code']
-            exec1 = self.data.get(filename) or {}
-            executed = parser.first_lines(exec1)
-            missing = code - executed
-            result[filename] = {
-                'code': list(code),
-                'executed': list(executed),
-                'missed': list(missing),
-                'coverage': float(len(executed)) / len(code)
-            }
-        return result
-
 
