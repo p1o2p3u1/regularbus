@@ -88,12 +88,10 @@ class CoverageCollector:
         filename = self.file_locator.canonical_filename(filename)
         # then check if this is lib file
         if self.pylib_match and self.pylib_match.match(filename):
-            print filename, " This is a library file, ignore trace"
             return False
         # then check if this is the coverage package source
         if 0:
             if self.cover_match and self.cover_match.match(filename):
-                print filename, " This is coverage package source, ignore trace"
                 return False
         # trace it.
         return True

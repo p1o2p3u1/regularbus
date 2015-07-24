@@ -17,25 +17,18 @@ class BusStation(WebSocketServerProtocol):
         self.interval = 1
 
     def onConnect(self, request):
-        print("Client connecting: {0}".format(request.peer))
+        pass
 
     def onOpen(self):
-        print("WebSocket connection open, start sending collect data")
         if self.task and not self.task.running:
             self.task.start(1)
 
     def onMessage(self, payload, isBinary):
-        print payload
-        sum = 0
-        for i in range(100):
-            sum += i
-        print sum
+        pass
 
     def onClose(self, wasClean, code, reason):
-        print("WebSocket connection closed: {0}".format(reason))
         if self.task and self.task.running:
             self.task.stop()
-        print("send collect data stopped.")
 
     def _collect_data(self):
         self.cov_data = self.harvest_data()
@@ -68,9 +61,7 @@ class CollectorService:
         self.thread = Thread(target=self.reactor.run, args=(False,))
 
     def start(self):
-        
         self.thread.start()
-        print("socket service started on %s:%d" % (self.server, self.port))
 
     def stop(self):
         pass
