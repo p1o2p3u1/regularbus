@@ -69,7 +69,11 @@ class CoverageCollector:
         if filename.startswith('<'):
             return False
 
-        # something like .pyc
+        # ignore none python file, such as html
+        if not filename.endswith(".py") and not filename.endswith(".pyc") and not filename.endswith("$py.class"):
+            return False
+
+        # change file name like .pyc
         if not filename.endswith(".py"):
             if filename[-4:-1] == ".py":
                 filename = filename[:-1]
