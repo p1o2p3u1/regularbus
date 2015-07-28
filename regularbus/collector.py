@@ -4,6 +4,11 @@ import atexit
 import random
 import socket
 import threading
+import flask
+import twisted
+import autobahn
+import coverage
+
 from tracer import SimplePyTracer
 from coverage.files import FileLocator, TreeMatcher
 from coverage.codeunit import CodeUnit
@@ -24,7 +29,7 @@ class CoverageCollector:
         self.file_locator = FileLocator()
         # check where are the libraries
         self.pylib_dirs = []
-        for m in (atexit, os, random, socket):
+        for m in (atexit, os, random, socket, flask, twisted, autobahn, coverage):
             if m is not None and hasattr(m, "__file__"):
                 m_dir = self._get_dir(m)
                 if m_dir not in self.pylib_dirs:
