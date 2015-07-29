@@ -10,8 +10,7 @@ import autobahn
 import coverage
 
 from tracer import SimplePyTracer
-from coverage.files import FileLocator, TreeMatcher
-from coverage.codeunit import CodeUnit
+from coverage.files import TreeMatcher
 
 # Pypy has some unusual stuff in the "stdlib".  Consider those locations
 # when deciding where the stdlib is.
@@ -22,11 +21,10 @@ except ImportError:
 
 class CoverageCollector:
 
-    def __init__(self):
+    def __init__(self, ignore_paths=None):
         self.data = {}
         self.tracer = None
         self.trace_fun = None
-        self.file_locator = FileLocator()
         # check where are the libraries
         self.pylib_dirs = []
         for m in (atexit, os, random, socket, flask, twisted, autobahn, coverage):
@@ -34,11 +32,18 @@ class CoverageCollector:
                 m_dir = self._get_dir(m)
                 if m_dir not in self.pylib_dirs:
                     self.pylib_dirs.append(m_dir)
-        # avoid tracing the package itself
-        self.cover_dir = self._get_dir(__file__)
 
-        if self.cover_dir:
-            self.cover_match = TreeMatcher([self.cover_dir])
+        if ignore_paths is not None:
+            if type(ignore_paths) is str:
+                if ignore_paths not in self.pylib_dirs:
+                    self.pylib_dirs.append(ignore_paths)
+            elif type(ignore_paths) is list:
+                for p in ignore_paths:
+                    if p not in self.pylib_dirs:
+                        self.pylib_dirs.append(p)
+            else:
+                # what the hell is this?
+                pass
 
         if self.pylib_dirs:
             self.pylib_match = TreeMatcher(self.pylib_dirs)
@@ -94,19 +99,27 @@ class CoverageCollector:
                 if os.path.exists(f):
                     filename = f
                     break
-        filename = self.file_locator.canonical_filename(filename)
+
+        # check if we only have compiled .pyc file, then ignore trace
+        if not os.path.exists(filename):
+            return False
+
         # then check if this is lib file
         if self.pylib_match and self.pylib_match.match(filename):
             return False
-        # then check if this is the coverage package source
-        if 0:
-            if self.cover_match and self.cover_match.match(filename):
-                return False
+
         # trace it.
         return True
 
     def _get_dir(self, module):
-        return os.path.split(CodeUnit(module, self.file_locator).filename)[0]
+        if hasattr(module, '__file__'):
+            filename = module.__file__
+        else:
+            filename = module
+        filename = os.path.dirname(os.path.split(filename)[0])
+        if filename.endswith('.egg'):
+            filename = os.path.split(filename)[0]
+        return filename
 
     def harvest_data(self):
         """
@@ -138,10 +151,14 @@ class CoverageCollector:
             exec1 = self.data.get(filename) or {}
             executed = parser.first_lines(exec1)
             missing = code - executed
+            if len(code) == 0:
+                cov = 100
+            else:
+                cov = float(len(executed)) / len(code)
             result[key] = {
                 'code': list(code),
                 'executed': list(executed),
                 'missed': list(missing),
-                'coverage': float(len(executed)) / len(code)
+                'coverage': cov
             }
         return result

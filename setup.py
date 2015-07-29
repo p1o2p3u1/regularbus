@@ -5,10 +5,10 @@ setup(
     packages=['regularbus'],
     version='0.2',
     install_requires=[
-        "flask",
-        "twisted",
-        "autobahn",
-        "coverage"
+        "flask>=0.10.1",
+        "twisted>=15.2.1",
+        "autobahn>=0.10.4",
+        "coverage==3.7.1"
     ],
     description='python coverage test tool',
     author='ting wu',

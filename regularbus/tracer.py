@@ -46,25 +46,21 @@ class SimplePyTracer:
         """
         filename = frame.f_code.co_filename
         line_no = frame.f_lineno
-        if event == "call":
-            if filename in self.should_not_trace_cache:
-                return self._trace
 
-            if filename not in self.should_trace_cache:
-                trace_it = self.should_trace(filename, frame)
-                if trace_it:
-                    self.should_trace_cache[filename] = None
-                    # we need to trace it
-                    self._init_trace_file(filename, line_no)
-                else:
-                    self.should_not_trace_cache[filename] = None
+        if filename in self.should_not_trace_cache:
+            return self._trace
+
+        if filename not in self.should_trace_cache:
+            trace_it = self.should_trace(filename, frame)
+            if trace_it:
+                self.should_trace_cache[filename] = None
+                # we need to trace it
+                self._init_trace_file(filename, line_no)
             else:
-                # we need to trace it.
-                self.data[filename][line_no] = None
-
-        if event == 'line':
-            if filename in self.should_trace_cache:
-                self.data[filename][frame.f_lineno] = None
+                self.should_not_trace_cache[filename] = None
+        else:
+            # we need to trace it.
+            self.data[filename][line_no] = None
 
         return self._trace
 

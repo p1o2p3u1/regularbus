@@ -21,10 +21,16 @@ class BusStation(WebSocketServerProtocol):
 
     def onOpen(self):
         if self.task and not self.task.running:
-            self.task.start(1)
+            self.task.start(self.interval)
 
     def onMessage(self, payload, isBinary):
-        pass
+        if self.task and self.task.running:
+            self.task.stop()
+            try:
+                self.interval = int(payload)
+            except (TypeError, ValueError):
+                self.interval = 1
+            self.task.start(self.interval)
 
     def onClose(self, wasClean, code, reason):
         if self.task and self.task.running:

@@ -7,8 +7,8 @@ class RegularBus:
     bus.start_trace()
     """
 
-    def __init__(self, server, port):
-        self.collector = CoverageCollector()
+    def __init__(self, server, port, ignore_paths=None):
+        self.collector = CoverageCollector(ignore_paths=ignore_paths)
         self.service = CollectorService(
             harvest_data=self.collector.harvest_data,
             server=server,
