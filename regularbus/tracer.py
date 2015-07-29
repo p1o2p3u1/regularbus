@@ -44,6 +44,7 @@ class SimplePyTracer:
         :return: return a reference to a local trace function to be used that
             scope, which means we need to return the trace function itself.
         """
+        # filename can be a relative path name
         filename = frame.f_code.co_filename
         line_no = frame.f_lineno
 
@@ -51,8 +52,8 @@ class SimplePyTracer:
             return self._trace
 
         if filename not in self.should_trace_cache:
-            trace_it = self.should_trace(filename, frame)
-            if trace_it:
+            filename = self.should_trace(filename, frame)
+            if filename is not None:
                 self.should_trace_cache[filename] = None
                 # we need to trace it
                 self._init_trace_file(filename, line_no)

@@ -69,19 +69,19 @@ class CoverageCollector:
         Decide if we need to trace this file or not. We need to ignore python
         library files and package files, and only trace the game source files.
         :param filename: the name of the file
-        :return: True or False
+        :return: None or real path of the file
         """
         # empty filename shouldn't be traced.
         if not filename:
-            return False
+            return None
 
         # something like <string>
         if filename.startswith('<'):
-            return False
+            return None
 
         # ignore none python file, such as html
         if not filename.endswith(".py") and not filename.endswith(".pyc") and not filename.endswith("$py.class"):
-            return False
+            return None
 
         # change file name like .pyc
         if not filename.endswith(".py"):
@@ -92,24 +92,22 @@ class CoverageCollector:
 
         # if the filename is not an absolute path
         if not os.path.isabs(filename):
-            for path in [os.curdir] + sys.path:
-                if path is None:
-                    continue
-                f = os.path.join(path, filename)
-                if os.path.exists(f):
-                    filename = f
-                    break
+            abs_filename = os.path.abspath(filename)
+            if not os.path.exists(abs_filename):
+                filename = os.path.realpath(os.path.join(os.getcwd(), filename))
+            else:
+                filename = os.path.realpath(abs_filename)
 
         # check if we only have compiled .pyc file, then ignore trace
         if not os.path.exists(filename):
-            return False
+            return None
 
         # then check if this is lib file
         if self.pylib_match and self.pylib_match.match(filename):
-            return False
+            return None
 
         # trace it.
-        return True
+        return filename
 
     def _get_dir(self, module):
         if hasattr(module, '__file__'):
