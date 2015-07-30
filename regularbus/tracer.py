@@ -4,7 +4,6 @@ import os
 
 
 def _get_real_path(filename):
-
     if not filename.endswith(".py"):
         if filename[-4:-1] == ".py":
             filename = filename[:-1]
@@ -23,7 +22,6 @@ def _get_real_path(filename):
 
 
 class SimplePyTracer:
-
     def __init__(self):
         # This is a function, decide if we need to trace a file
         self.should_trace = None
@@ -66,32 +64,32 @@ class SimplePyTracer:
             scope, which means we need to return the trace function itself.
         """
         # filename can be a relative path name
-        filename = frame.f_code.co_filename
+        cur_file_path = frame.f_code.co_filename
         line_no = frame.f_lineno
 
-        if filename in self.should_not_trace_cache:
+        if cur_file_path in self.should_not_trace_cache:
             return self._trace
-        filename = _get_real_path(filename)
-        if filename in self.should_trace_cache:
-            self.data[filename][line_no] = None
-            return self._trace
+
+        real_file_path = _get_real_path(cur_file_path)
+
+        if real_file_path in self.should_trace_cache:
+            self.data[real_file_path][line_no] = None
         else:
-            if not filename:
+            if not cur_file_path:
                 return self._trace
-            if filename.startswith('<'):
-                self.should_not_trace_cache[filename] = None
+            if cur_file_path.startswith('<'):
+                self.should_not_trace_cache[cur_file_path] = None
                 return self._trace
-            if not filename.endswith(".py") and not filename.endswith(".pyc") and not filename.endswith("$py.class"):
-                self.should_not_trace_cache[filename] = None
+            if not cur_file_path.endswith(".py") and not cur_file_path.endswith(".pyc") and not cur_file_path.endswith(
+                    "$py.class"):
+                self.should_not_trace_cache[cur_file_path] = None
                 return self._trace
-
-            trace_it = self.should_trace(filename)
+            trace_it = self.should_trace(cur_file_path)
             if trace_it:
-                self.should_trace_cache[filename] = None
-                self._init_trace_file(filename, line_no)
+                self.should_trace_cache[real_file_path] = None
+                self._init_trace_file(real_file_path, line_no)
             else:
-                self.should_not_trace_cache[filename] = None
-
+                self.should_not_trace_cache[cur_file_path] = None
         return self._trace
 
     def start(self):
