@@ -1,5 +1,6 @@
 from coverage.parser import CodeParser
 import sys
+import os
 
 class SimplePyTracer:
 
@@ -47,6 +48,12 @@ class SimplePyTracer:
         # filename can be a relative path name
         filename = frame.f_code.co_filename
         line_no = frame.f_lineno
+        if not os.path.isabs(filename):
+            abs_path = os.path.abspath(filename)
+            if not os.path.exists(abs_path):
+                filename = os.path.realpath(os.path.join(os.getcwd(), filename))
+            else:
+                filename = os.path.realpath(abs_path)
 
         if filename in self.should_not_trace_cache:
             return self._trace
@@ -68,5 +75,3 @@ class SimplePyTracer:
     def start(self):
         sys.settrace(self._trace)
         return self._trace
-
-
