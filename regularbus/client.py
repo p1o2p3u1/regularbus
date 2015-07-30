@@ -67,6 +67,7 @@ class CollectorService:
         self.thread = Thread(target=self.reactor.run, args=(False,))
 
     def start(self):
+        self.thread.setDaemon(True)
         self.thread.start()
 
     def stop(self):
