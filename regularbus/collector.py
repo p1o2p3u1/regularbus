@@ -113,19 +113,17 @@ class CoverageCollector:
         }
         """
         result = {}
-        # make a copy of the original dict because of the following problem:
-        # RuntimeError: dictionary changed size during iteration
-        trace_files = dict(self.tracer.parse_cache)
-        collect_data = dict(self.data)
-        for filename, item in trace_files.iteritems():
+        # RuntimeError: dictionary changed size during iteration?
+        for filename in self.tracer.parse_cache.keys():
+            item = self.tracer.parse_cache[filename]
             key = filename.replace('\\', '/')
-            parser = item['parser']
-            code = item['code']
-            exec1 = collect_data.get(filename) or {}
-            executed = parser.first_lines(exec1)
-            missing = code - executed
-            if len(code) == 0:
-                cov = 1
+            parser = item['parser']  # code parser
+            code = item['code']  # a set of total code line number
+            exec1 = self.data.get(filename) or {}  # a dict of code line number that executed
+            executed = parser.first_lines(exec1)  # a set of code line number that executed
+            missing = code - executed   # a set of code line number that missed execute
+            if len(code) == 0:  # for some __init__.py, file is empty but also have 1 line code executed..Why?
+                cov = 1     # for that file, let's make it 100%
             else:
                 cov = float(len(executed)) / len(code)
             result[key] = {
@@ -134,4 +132,4 @@ class CoverageCollector:
                 'missed': list(missing),
                 'coverage': cov
             }
-        return result
+            return result
