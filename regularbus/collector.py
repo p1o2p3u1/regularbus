@@ -119,7 +119,7 @@ class CoverageCollector:
         # RuntimeError: dictionary changed size during iteration
         trace_files = dict(self.tracer.parse_cache)
         collect_data = dict(self.data)
-        for filename, item in trace_files:
+        for filename, item in trace_files.iteritems():
             key = filename.replace('\\', '/')
             parser = item['parser']
             code = item['code']
