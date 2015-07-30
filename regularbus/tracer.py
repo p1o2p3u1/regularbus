@@ -77,14 +77,11 @@ class SimplePyTracer:
             return self._trace
         else:
             if not filename:
-                print "empty filename, ignore trace ", filename
                 return self._trace
             if filename.startswith('<'):
-                print "invalid filename, ignore trace ", filename
                 self.should_not_trace_cache[filename] = None
                 return self._trace
             if not filename.endswith(".py") and not filename.endswith(".pyc") and not filename.endswith("$py.class"):
-                print "not a python source file, ignore trace ", filename
                 self.should_not_trace_cache[filename] = None
                 return self._trace
 

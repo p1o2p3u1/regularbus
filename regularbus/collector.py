@@ -73,12 +73,10 @@ class CoverageCollector:
         :return: True or False
         """
         if not os.path.exists(filename):
-            print "source file doesn't exist, ignore trace ", filename
             return False
 
         # then check if this is lib file
         if self.pylib_match and self.pylib_match.match(filename):
-            print "library file, ignore trace ", filename
             return False
 
         print "++++++++++++trace this file ", filename
