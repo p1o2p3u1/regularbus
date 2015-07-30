@@ -2,6 +2,26 @@ from coverage.parser import CodeParser
 import sys
 import os
 
+
+def _get_real_path(filename):
+
+    if not filename.endswith(".py"):
+        if filename[-4:-1] == ".py":
+            filename = filename[:-1]
+        elif filename.endswith("$py.class"):  # jython
+            filename = filename[:-9] + ".py"
+
+    if os.path.isabs(filename):
+        return filename
+    else:
+        real_path = os.path.abspath(filename)
+        if not os.path.exists(real_path):
+            real_path = os.path.realpath(os.path.join(os.getcwd(), filename))
+        else:
+            real_path = os.path.realpath(real_path)
+        return real_path
+
+
 class SimplePyTracer:
 
     def __init__(self):
@@ -48,27 +68,32 @@ class SimplePyTracer:
         # filename can be a relative path name
         filename = frame.f_code.co_filename
         line_no = frame.f_lineno
-        if not os.path.isabs(filename):
-            abs_path = os.path.abspath(filename)
-            if not os.path.exists(abs_path):
-                filename = os.path.realpath(os.path.join(os.getcwd(), filename))
-            else:
-                filename = os.path.realpath(abs_path)
 
         if filename in self.should_not_trace_cache:
             return self._trace
+        filename = _get_real_path(filename)
+        if filename in self.should_trace_cache:
+            self.data[filename][line_no] = None
+            return self._trace
+        else:
+            if not filename:
+                print "empty filename, ignore trace ", filename
+                return self._trace
+            if filename.startswith('<'):
+                print "invalid filename, ignore trace ", filename
+                self.should_not_trace_cache[filename] = None
+                return self._trace
+            if not filename.endswith(".py") and not filename.endswith(".pyc") and not filename.endswith("$py.class"):
+                print "not a python source file, ignore trace ", filename
+                self.should_not_trace_cache[filename] = None
+                return self._trace
 
-        if filename not in self.should_trace_cache:
-            filename = self.should_trace(filename, frame)
-            if filename is not None:
+            trace_it = self.should_trace(filename)
+            if trace_it:
                 self.should_trace_cache[filename] = None
-                # we need to trace it
                 self._init_trace_file(filename, line_no)
             else:
                 self.should_not_trace_cache[filename] = None
-        else:
-            # we need to trace it.
-            self.data[filename][line_no] = None
 
         return self._trace
 

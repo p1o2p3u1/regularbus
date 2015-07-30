@@ -1,16 +1,17 @@
 import os
-import sys
 import atexit
 import random
 import socket
 import threading
+
 import flask
 import twisted
 import autobahn
 import coverage
+from coverage.files import TreeMatcher
 
 from tracer import SimplePyTracer
-from coverage.files import TreeMatcher
+
 
 # Pypy has some unusual stuff in the "stdlib".  Consider those locations
 # when deciding where the stdlib is.
@@ -64,48 +65,25 @@ class CoverageCollector:
         self.trace_fun = self.tracer.start()
         return self.trace_fun
 
-    def _should_trace(self, filename, frame):
+    def _should_trace(self, filename):
         """
         Decide if we need to trace this file or not. We need to ignore python
         library files and package files, and only trace the game source files.
         :param filename: the name of the file
-        :return: None or real path of the file
+        :return: True or False
         """
-        # empty filename shouldn't be traced.
-        if not filename:
-            print "empty filename, ignore trace ", filename
-            return None
-
-        # something like <string>
-        if filename.startswith('<'):
-            print "invalid filename, ignore trace ", filename
-            return None
-
-        # ignore none python file, such as html
-        if not filename.endswith(".py") and not filename.endswith(".pyc") and not filename.endswith("$py.class"):
-            print "not a python source file, ignore trace ", filename
-            return None
-
-        # change file name like .pyc
-        if not filename.endswith(".py"):
-            if filename[-4:-1] == ".py":
-                filename = filename[:-1]
-            elif filename.endswith("$py.class"):  # jython
-                filename = filename[:-9] + ".py"
-
-        # check if we only have compiled .pyc file, then ignore trace
         if not os.path.exists(filename):
             print "source file doesn't exist, ignore trace ", filename
-            return None
+            return False
 
         # then check if this is lib file
         if self.pylib_match and self.pylib_match.match(filename):
             print "library file, ignore trace ", filename
-            return None
+            return False
 
         print "++++++++++++trace this file ", filename
         # trace it.
-        return filename
+        return True
 
     def _get_dir(self, module):
         if hasattr(module, '__file__'):
