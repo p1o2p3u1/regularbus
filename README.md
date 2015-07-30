@@ -12,7 +12,7 @@ python setup.py install
 # before the project start
 
 from regularbus import regularbus
-r = regularbus.RegularBus('localhost', '9000')
+r = regularbus.RegularBus('0.0.0.0', '9000')
 r.lets_go()
 
 # then the source code
