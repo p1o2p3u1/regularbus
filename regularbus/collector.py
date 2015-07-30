@@ -73,14 +73,17 @@ class CoverageCollector:
         """
         # empty filename shouldn't be traced.
         if not filename:
+            print "empty filename, ignore trace ", filename
             return None
 
         # something like <string>
         if filename.startswith('<'):
+            print "invalid filename, ignore trace ", filename
             return None
 
         # ignore none python file, such as html
         if not filename.endswith(".py") and not filename.endswith(".pyc") and not filename.endswith("$py.class"):
+            print "not a python source file, ignore trace ", filename
             return None
 
         # change file name like .pyc
@@ -90,22 +93,17 @@ class CoverageCollector:
             elif filename.endswith("$py.class"):  # jython
                 filename = filename[:-9] + ".py"
 
-        # if the filename is not an absolute path
-        if not os.path.isabs(filename):
-            abs_filename = os.path.abspath(filename)
-            if not os.path.exists(abs_filename):
-                filename = os.path.realpath(os.path.join(os.getcwd(), filename))
-            else:
-                filename = os.path.realpath(abs_filename)
-
         # check if we only have compiled .pyc file, then ignore trace
         if not os.path.exists(filename):
+            print "source file doesn't exist, ignore trace ", filename
             return None
 
         # then check if this is lib file
         if self.pylib_match and self.pylib_match.match(filename):
+            print "library file, ignore trace ", filename
             return None
 
+        print "++++++++++++trace this file ", filename
         # trace it.
         return filename
 
@@ -139,18 +137,19 @@ class CoverageCollector:
         }
         """
         result = {}
-        keys = self.tracer.parse_cache.keys()
-        for filename in keys:
-            # replace windows \\ path separator
-            item = self.tracer.parse_cache[filename]
+        # make a copy of the original dict because of the following problem:
+        # RuntimeError: dictionary changed size during iteration
+        trace_files = dict(self.tracer.parse_cache)
+        collect_data = dict(self.data)
+        for filename, item in trace_files:
             key = filename.replace('\\', '/')
             parser = item['parser']
             code = item['code']
-            exec1 = self.data.get(filename) or {}
+            exec1 = collect_data.get(filename) or {}
             executed = parser.first_lines(exec1)
             missing = code - executed
             if len(code) == 0:
-                cov = 100
+                cov = 1
             else:
                 cov = float(len(executed)) / len(code)
             result[key] = {
