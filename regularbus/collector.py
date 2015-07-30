@@ -132,4 +132,4 @@ class CoverageCollector:
                 'missed': list(missing),
                 'coverage': cov
             }
-            return result
+        return result
