@@ -3,7 +3,7 @@ import sys
 import os
 
 
-def _get_real_path(filename):
+def get_real_path(filename):
     if not filename.endswith(".py"):
         if filename[-4:-1] == ".py":
             filename = filename[:-1]
@@ -70,7 +70,7 @@ class SimplePyTracer:
         if cur_file_path in self.should_not_trace_cache:
             return self._trace
 
-        real_file_path = _get_real_path(cur_file_path)
+        real_file_path = get_real_path(cur_file_path)
 
         if real_file_path in self.should_trace_cache:
             self.data[real_file_path][line_no] = None
@@ -95,3 +95,10 @@ class SimplePyTracer:
     def start(self):
         sys.settrace(self._trace)
         return self._trace
+
+    def clear(self):
+        self.data = {}
+        self.parse_cache = {}
+
+    def stop(self):
+        sys.settrace(None)
