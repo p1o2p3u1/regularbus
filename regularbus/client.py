@@ -5,14 +5,12 @@ from twisted.python import log
 from twisted.internet import reactor, task
 from threading import Thread
 import json
-from collector import CoverageCollector
 
 
 class BusStation(WebSocketServerProtocol):
 
     def __init__(self):
         self.cov_task = task.LoopingCall(self._collect_data)
-        self.cov_collector = CoverageCollector()
         self.cov_interval = 1
         self.cov_peer = None
 
@@ -39,15 +37,15 @@ class BusStation(WebSocketServerProtocol):
         op = s['op']
         if op == "add":
             # add a new file to display
-            self.cov_collector.add_cov_file(s['files'])
+            self.factory.collector.add_cov_file(s['files'])
 
         elif op == "clear":
             # clear the trace data
-            self.cov_collector.clear()
+            self.factory.collector.clear()
 
         elif op == "filter":
             # init display files
-            self.cov_collector.init_cov_files(s['files'])
+            self.factory.collector.init_cov_files(s['files'])
 
         elif op == "interval":
             # reset coverage interval
@@ -79,7 +77,7 @@ class BusStation(WebSocketServerProtocol):
 
         elif op == "start_trace":
             # start trace, set the trace function to sys.settrace
-            self.cov_collector.start_trace()
+            self.factory.collector.start_trace()
 
         elif op == "stop":
             # stop coverage task
@@ -89,7 +87,7 @@ class BusStation(WebSocketServerProtocol):
 
         elif op == "stop_trace":
             # stop trace, set None to sys.settrace
-            self.cov_collector.stop_trace()
+            self.factory.collector.stop_trace()
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))
@@ -97,7 +95,7 @@ class BusStation(WebSocketServerProtocol):
             self.cov_task.stop()
 
     def _collect_data(self):
-        cov_data = self.cov_collector.harvest_data()
+        cov_data = self.factory.collector.harvest_data()
         # The ensure_ascii == False option allows the JSON serializer
         # to use Unicode strings. We can do this since we are encoding
         # to UTF8 afterwards anyway. And UTF8 can represent the full
@@ -108,9 +106,10 @@ class BusStation(WebSocketServerProtocol):
 
 class CollectorService:
 
-    def __init__(self, server, port, debug):
+    def __init__(self, collector, server, port, debug):
         self.factory = WebSocketServerFactory("ws://%s:%d" % (server, port), debug=debug)
         self.factory.protocol = BusStation
+        self.factory.collector = collector
         self.reactor = reactor
         self.reactor.listenTCP(port, self.factory)
         self.thread = Thread(target=self.reactor.run, args=(False,))
