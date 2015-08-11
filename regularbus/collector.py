@@ -3,31 +3,24 @@ import atexit
 import random
 import socket
 import threading
-
 import flask
 import twisted
 import autobahn
 import coverage
 from coverage.files import TreeMatcher
-
 from tracer import SimplePyTracer
 
-
-# Pypy has some unusual stuff in the "stdlib".  Consider those locations
-# when deciding where the stdlib is.
-try:
-    import _structseq       # pylint: disable=F0401
-except ImportError:
-    _structseq = None
 
 class CoverageCollector:
 
     def __init__(self, ignore_paths=None):
+        self.cov_files = []
         self.data = {}
         self.tracer = None
         self.trace_fun = None
         # check where are the libraries
         self.pylib_dirs = []
+        self.started = False
         for m in (atexit, os, random, socket, flask, twisted, autobahn, coverage):
             if m is not None and hasattr(m, "__file__"):
                 m_dir = self._get_dir(m)
@@ -49,7 +42,8 @@ class CoverageCollector:
         if self.pylib_dirs:
             self.pylib_match = TreeMatcher(self.pylib_dirs)
 
-    def start(self):
+    def start_trace(self):
+        self.started = True
         self._start()
         threading.settrace(self._thread_trace)
 
@@ -113,23 +107,40 @@ class CoverageCollector:
         }
         """
         result = {}
-        # RuntimeError: dictionary changed size during iteration?
-        for filename in self.tracer.parse_cache.keys():
-            item = self.tracer.parse_cache[filename]
-            key = filename.replace('\\', '/')
-            parser = item['parser']  # code parser
-            code = item['code']  # a set of total code line number
-            exec1 = self.data.get(filename) or {}  # a dict of code line number that executed
-            executed = parser.first_lines(exec1)  # a set of code line number that executed
-            missing = code - executed   # a set of code line number that missed execute
-            if len(code) == 0:  # for some __init__.py, file is empty but also have 1 line code executed..Why?
-                cov = 1     # for that file, let's make it 100%
-            else:
-                cov = float(len(executed)) / len(code)
-            result[key] = {
-                'code': list(code),
-                'executed': list(executed),
-                'missed': list(missing),
-                'coverage': cov
-            }
+        if self.started:
+            # RuntimeError: dictionary changed size during iteration?
+            for filename in self.tracer.parse_cache.keys():
+                item = self.tracer.parse_cache[filename]
+                key = filename.replace('\\', '/')
+                parser = item['parser']  # code parser
+                code = item['code']  # a set of total code line number
+                exec1 = self.data.get(filename) or {}  # a dict of code line number that executed
+                executed = parser.first_lines(exec1)  # a set of code line number that executed
+                missing = code - executed   # a set of code line number that missed execute
+                if len(code) == 0:  # for some __init__.py, file is empty but also have 1 line code executed..Why?
+                    cov = 1     # for that file, let's make it 100%
+                else:
+                    cov = float(len(executed)) / len(code)
+                result[key] = {
+                    'code': list(code),
+                    'executed': list(executed),
+                    'missed': list(missing),
+                    'coverage': cov
+                }
         return result
+
+    def add_cov_file(self, cov_file):
+        self.cov_files.append(cov_file)
+
+    def clear(self):
+        self.tracer.clear()
+
+    def init_cov_files(self, files):
+        self.cov_files = files
+
+    def stop_trace(self):
+        self.started = False
+        self.tracer.stop()
+        threading.settrace(None)
+
+

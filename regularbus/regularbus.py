@@ -10,13 +10,13 @@ class RegularBus:
     def __init__(self, server, port, ignore_paths=None):
         self.collector = CoverageCollector(ignore_paths=ignore_paths)
         self.service = CollectorService(
-            harvest_data=self.collector.harvest_data,
+            collector=self.collector,
             server=server,
             port=port,
             debug=False)
 
     def lets_go(self):
-        self.collector.start()
+        self.collector.start_trace()
         self.service.start()
 
 if __name__ == '__main__':
