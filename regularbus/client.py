@@ -91,7 +91,6 @@ class BusStation(WebSocketServerProtocol):
     def _collect_data(self):
         cov_data = self.factory.collector.harvest_data()
         result = {k: v for k, v in cov_data.iteritems() if k in self.trace_filter}
-        print result
         # The ensure_ascii == False option allows the JSON serializer
         # to use Unicode strings. We can do this since we are encoding
         # to UTF8 afterwards anyway. And UTF8 can represent the full
