@@ -12,6 +12,7 @@ class BusStation(WebSocketServerProtocol):
     def __init__(self):
         self.cov_task = task.LoopingCall(self._collect_data)
         self.cov_interval = 1
+        self.trace_filter = {}
         self.cov_peer = None
 
     def onConnect(self, request):
@@ -35,17 +36,22 @@ class BusStation(WebSocketServerProtocol):
         print payload
         s = json.loads(payload)
         op = s['op']
-        if op == "add":
-            # add a new file to display
-            self.factory.collector.add_cov_file(s['files'])
 
-        elif op == "clear":
+        if op == "clear":
             # clear the trace data
             self.factory.collector.clear()
 
-        elif op == "filter":
+        elif op == "files":
             # init display files
-            self.factory.collector.init_cov_files(s['files'])
+            if self.cov_task and self.cov_task.running:
+                self.cov_task.stop()
+
+            self.trace_filter.clear()
+            files = s['files']
+            for f in files:
+                self.trace_filter[f] = None
+
+            self.cov_task.start()
 
         elif op == "interval":
             # reset coverage interval
@@ -96,11 +102,13 @@ class BusStation(WebSocketServerProtocol):
 
     def _collect_data(self):
         cov_data = self.factory.collector.harvest_data()
+        result = {k: v for k, v in cov_data.iteritems() if k in self.trace_filter}
+        print result
         # The ensure_ascii == False option allows the JSON serializer
         # to use Unicode strings. We can do this since we are encoding
         # to UTF8 afterwards anyway. And UTF8 can represent the full
         # Unicode character set.
-        s = json.dumps(cov_data, ensure_ascii=False).encode('utf8')
+        s = json.dumps(result, ensure_ascii=False).encode('utf8')
         self.sendMessage(s, False)
 
 
