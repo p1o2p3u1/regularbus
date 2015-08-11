@@ -37,11 +37,7 @@ class BusStation(WebSocketServerProtocol):
         s = json.loads(payload)
         op = s['op']
 
-        if op == "clear":
-            # clear the trace data
-            self.factory.collector.clear()
-
-        elif op == "files":
+        if op == "files":
             # init display files
             if self.cov_task and self.cov_task.running:
                 self.cov_task.stop()
@@ -51,7 +47,7 @@ class BusStation(WebSocketServerProtocol):
             for f in files:
                 self.trace_filter[f] = None
 
-            self.cov_task.start()
+            self.cov_task.start(self.cov_interval)
 
         elif op == "interval":
             # reset coverage interval
@@ -81,19 +77,11 @@ class BusStation(WebSocketServerProtocol):
                 self.cov_task.start(self.cov_interval)
                 print "coverage task started"
 
-        elif op == "start_trace":
-            # start trace, set the trace function to sys.settrace
-            self.factory.collector.start_trace()
-
         elif op == "stop":
             # stop coverage task
             if self.cov_task and self.cov_task.running:
                 self.cov_task.stop()
                 print "coverage task stopped"
-
-        elif op == "stop_trace":
-            # stop trace, set None to sys.settrace
-            self.factory.collector.stop_trace()
 
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))
