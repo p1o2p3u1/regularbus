@@ -73,7 +73,7 @@ class CoverageCollector:
         if self.pylib_match and self.pylib_match.match(filename):
             return False
 
-        print "++++++++++++trace this file ", filename
+        print "+"*20, "trace this file ", filename
         # trace it.
         return True
 

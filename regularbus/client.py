@@ -48,6 +48,10 @@ class BusStation(WebSocketServerProtocol):
                 self.trace_filter[f] = None
 
             self.cov_task.start(self.cov_interval)
+            #  send back the current cov data for debugging
+            cov_data = self.factory.collector.harvest_data()
+            s = json.dumps(cov_data, ensure_ascii=False).encode('utf8')
+            self.sendMessage(s, False)
 
         elif op == "interval":
             # reset coverage interval
