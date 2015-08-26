@@ -1,4 +1,4 @@
-from collector import CoverageCollector
+from manager import CollectorManager
 from client import CollectorService
 
 class RegularBus:
@@ -8,15 +8,15 @@ class RegularBus:
     """
 
     def __init__(self, server, port, ignore_paths=None):
-        self.collector = CoverageCollector(ignore_paths=ignore_paths)
+        self.manager = CollectorManager()
         self.service = CollectorService(
-            collector=self.collector,
+            manager=self.manager,
             server=server,
             port=port,
             debug=False)
 
     def lets_go(self):
-        self.collector.start_trace()
+        self.manager.start_trace()
         self.service.start()
 
 if __name__ == '__main__':
