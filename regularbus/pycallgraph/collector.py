@@ -2,7 +2,7 @@ import inspect
 from collections import defaultdict
 import time
 from grouper import Grouper
-from graphviz import GraphvizOutput
+from graph import GraphvizOutput
 
 
 class CallStackCollector:
@@ -159,7 +159,8 @@ class CallStackCollector:
             nodes.append({
                 'name': node.name,
                 'calls': node.calls.value,
-                'time': node.time.value
+                'time': node.time.value,
+                'avg': node.time.value / node.calls.value
             })
         edges = []
         for edge in self.edges():
@@ -182,6 +183,14 @@ class CallStackCollector:
         except Exception, e:
             binary = bytes()
         return binary
+
+    def reset(self):
+        self.call_stack = ['__main__']
+        self.call_dict.clear()
+        self.func_count.clear()
+        self.call_stack_timer = []
+        self.previous_event_return = False
+        self.func_time.clear()
 
 class Stat(object):
     """

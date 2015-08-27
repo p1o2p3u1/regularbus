@@ -1,5 +1,7 @@
 from manager import CollectorManager
 from client import CollectorService
+from twisted.python import log
+import sys
 
 class RegularBus:
     """
@@ -16,10 +18,8 @@ class RegularBus:
             debug=False)
 
     def lets_go(self):
+        log.startLogging(sys.stdout)
         self.manager.start_trace()
         self.service.start()
 
-if __name__ == '__main__':
-    b = RegularBus('localhost', 9000)
-    b.lets_go()
-    print("trace started")
+

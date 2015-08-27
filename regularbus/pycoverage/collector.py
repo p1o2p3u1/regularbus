@@ -5,7 +5,6 @@ class CoverageCollector:
 
     def __init__(self, ignore_paths=None):
         self.data = {}
-        self.started = False
         self.parse_cache = {}
 
     def collect(self, filename, line_no):
@@ -60,6 +59,11 @@ class CoverageCollector:
                 'coverage': cov
             }
         return result
+
+    def reset(self):
+        self.parse_cache.clear()
+        self.data.clear()
+
 
 
 

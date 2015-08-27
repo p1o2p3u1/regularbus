@@ -91,6 +91,9 @@ class CollectorManager:
         binary = self.call_graph_collector.draw_graph()
         return binary
 
+    def clear_graph(self):
+        self.call_graph_collector.reset()
+
     def trace(self, frame, event, arg):
         """
         The main trace function, decide what we need to do for each function

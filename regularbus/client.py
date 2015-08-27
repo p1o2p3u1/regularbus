@@ -62,18 +62,6 @@ class BusStation(WebSocketServerProtocol):
                 self.cov_task.stop()
             self.cov_task.start(self.cov_interval)
 
-        elif op == "pause":
-            # pause coverage task
-            if self.cov_task and self.cov_task.running:
-                self.cov_task.stop()
-                print "coverage task paused"
-
-        elif op == "resume":
-            # resume coverage task
-            if self.cov_task and not self.cov_task.running:
-                self.cov_task.start(self.cov_interval)
-                print "coverage task resumed"
-
         elif op == "start":
             # start coverage task
             if self.cov_task and not self.cov_task.running:
@@ -86,15 +74,15 @@ class BusStation(WebSocketServerProtocol):
                 self.cov_task.stop()
                 print "coverage task stopped"
 
-        elif op == "start trace":
+        elif op == "start graph":
             self.factory.manager.do_call_graph = True
             self.graph_task.start(self.cov_interval)
 
-        elif op == "stop trace":
+        elif op == "stop graph":
             self.factory.manager.do_call_graph = False
-            graph = self.factory.manager.harvest_call_graph_data()
-            print json.dumps(graph)
             self.graph_task.stop()
+        elif op == "clear graph":
+            self.factory.manager.clear_graph()
         else:
             pass
 
@@ -102,6 +90,8 @@ class BusStation(WebSocketServerProtocol):
         print("WebSocket connection closed: {0}".format(reason))
         if self.cov_task and self.cov_task.running:
             self.cov_task.stop()
+        if self.graph_task and self.graph_task.running:
+            self.graph_task.stop()
 
     def _collect_cov_data(self):
         cov_data = self.factory.manager.harvest_coverage_data()
@@ -117,6 +107,10 @@ class BusStation(WebSocketServerProtocol):
         image = self.factory.manager.harvest_graph()
         # send binary image to the client
         self.sendMessage(image, isBinary=True)
+        # collect graph data
+        graph = self.factory.manager.harvest_call_graph_data()
+        s = json.dumps(graph, ensure_ascii=False).encode('utf8')
+        self.sendMessage(s, isBinary=False)
 
 
 class CollectorService:

@@ -1,10 +1,8 @@
 from __future__ import division
-
-import tempfile
-import os
 import textwrap
-import re
-from exceptions import PyCallGraphException
+
+import graphviz
+
 from color import Color
 
 
@@ -51,22 +49,11 @@ def gen_edge(edge, attr):
     )
 
 
-def normalize_path(path):
-    regex_user_expand = re.compile('\A~')
-    if regex_user_expand.match(path):
-        path = os.path.expanduser(path)
-    else:
-        path = os.path.expandvars(path)  # expand, just in case
-    return path
-
-
 class GraphvizOutput:
 
     def __init__(self):
         self.processor = None
-        self.tool = 'dot'
-        self.output_file = 'pycallgraph.png'
-        self.output_type = 'png'
+        self.output_file = 'pycallgraph'
         self.font_name = 'Verdana'
         self.font_size = 7
         self.group_font_size = 10
@@ -99,26 +86,9 @@ class GraphvizOutput:
         }
 
     def done(self):
-        self.output_file = normalize_path(self.output_file)
         source = self.generate()
-
-        fd, temp_name = tempfile.mkstemp()
-        with os.fdopen(fd, 'w') as f:
-            f.write(source)
-
-        cmd = '"{0}" -T{1} -o{2} {3}'.format(
-            self.tool, self.output_type, self.output_file, temp_name
-        )
-
-        print "Executing command to generate graph: ", cmd
-        try:
-            ret = os.system(cmd)
-            if ret:
-                raise PyCallGraphException(
-                    'The command "%(cmd)s" failed with error '
-                    'code %(ret)i.' % locals())
-        finally:
-            os.unlink(temp_name)
+        s = graphviz.Source(source=source, format='png')
+        s.render(filename=self.output_file, cleanup=True)
 
     def generate(self):
         """
