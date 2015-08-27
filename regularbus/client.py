@@ -92,6 +92,7 @@ class BusStation(WebSocketServerProtocol):
             self.cov_task.stop()
         if self.graph_task and self.graph_task.running:
             self.graph_task.stop()
+        self.factory.manager.do_call_graph = False
 
     def _collect_cov_data(self):
         cov_data = self.factory.manager.harvest_coverage_data()
