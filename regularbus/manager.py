@@ -114,7 +114,7 @@ class CollectorManager:
 
         real_file_path = get_real_path(cur_file_path)
 
-        if real_file_path in self.should_trace_cache:
+        if cur_file_path in self.should_trace_cache:
             self.coverage_collector.collect(real_file_path, line_no)
             if self.do_call_graph:
                 self.call_graph_collector.collect(frame, event)
