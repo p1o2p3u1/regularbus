@@ -52,7 +52,7 @@ class GraphvizOutput:
 
     def __init__(self):
         self.processor = None
-        self.output_file = 'pycallgraph'
+        self.output_file = 'pycallgraph.png'
         self.font_name = 'Verdana'
         self.font_size = 7
         self.group_font_size = 10
