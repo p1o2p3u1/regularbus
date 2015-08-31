@@ -45,8 +45,8 @@ class CoverageCollector:
             key = filename.replace('\\', '/')
             parser = item['parser']  # code parser
             code = item['code']  # a set of total code line number
-            exec1 = self.data.get(filename) or {}  # a set of code line number that executed
-            executed = parser.first_lines(exec1)  # a set of code line number that executed
+            exec1 = self.data.get(filename).copy()  # a set of code line number that executed.
+            executed = parser.first_lines(exec1)  # exclude multiple lines, such as doc string.
             missing = code - executed   # a set of code line number that missed execute
             if len(code) == 0:  # for some __init__.py, the file is empty but also have 1 line code executed..Why?
                 cov = 1     # for that file, let's make it 100%
