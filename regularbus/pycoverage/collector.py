@@ -3,7 +3,7 @@ from coverage.parser import CodeParser
 
 class CoverageCollector:
 
-    def __init__(self, ignore_paths=None):
+    def __init__(self):
         self.data = {}
         self.parse_cache = {}
 
@@ -63,7 +63,3 @@ class CoverageCollector:
     def reset(self):
         self.parse_cache.clear()
         self.data.clear()
-
-
-
-

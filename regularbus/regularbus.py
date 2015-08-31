@@ -9,7 +9,7 @@ class RegularBus:
     bus.start_trace()
     """
 
-    def __init__(self, server, port, ignore_paths=None):
+    def __init__(self, server, port):
         self.manager = CollectorManager()
         self.service = CollectorService(
             manager=self.manager,

@@ -6,7 +6,6 @@ from graph import GraphvizOutput
 
 
 class CallStackCollector:
-
     def __init__(self):
         # Current call stack
         self.call_stack = ['__main__']
@@ -192,6 +191,7 @@ class CallStackCollector:
         self.previous_event_return = False
         self.func_time.clear()
 
+
 class Stat(object):
     """
     Stores a "statistic" value, e.g. "time taken" along with the maximum
@@ -207,8 +207,8 @@ class Stat(object):
         except ZeroDivisionError:
             self.fraction = 0
 
-class StatGroup(object):
 
+class StatGroup(object):
     def __init__(self):
         self.name = None
         self.group = None
