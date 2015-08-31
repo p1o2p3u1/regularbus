@@ -2,4 +2,3 @@ flask
 twisted
 autobahn
 coverage
-graphviz
