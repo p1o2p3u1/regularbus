@@ -1,8 +1,7 @@
 from __future__ import division
 import textwrap
-
-import graphviz
-
+import tempfile
+import os
 from color import Color
 
 
@@ -87,8 +86,20 @@ class GraphvizOutput:
 
     def done(self):
         source = self.generate()
-        s = graphviz.Source(source=source, format='png')
-        s.render(filename=self.output_file, cleanup=True)
+        fd, temp_name = tempfile.mkstemp()
+        with os.fdopen(fd, 'w') as f:
+            f.write(source)
+
+        cmd = '"dot" -Tpng -o{0} {1}'.format(self.output_file, temp_name)
+
+        try:
+            ret = os.system(cmd)
+            if ret:
+                raise Exception(
+                    'The command "%(cmd)s" failed with error '
+                    'code %(ret)i.' % locals())
+        finally:
+            os.unlink(temp_name)
 
     def generate(self):
         """

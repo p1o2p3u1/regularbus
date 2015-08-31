@@ -94,7 +94,7 @@ class CollectorManager:
     def clear_graph(self):
         self.call_graph_collector.reset()
 
-    def trace(self, frame, event, arg):
+    def trace(self, frame, event, arg_unused):
         """
         The main trace function, decide what we need to do for each function
         call or line execution.
