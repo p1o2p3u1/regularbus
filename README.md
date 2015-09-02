@@ -33,7 +33,7 @@ from flask import Flask
 app = Flask(__name__)
 
 if __name__ == '__main__':
-    bus = RegularBus('localhost', 9000)
+    bus = regularbus.RegularBus('localhost', 9000)
     bus.lets_go()
     threading.Thread(
         target=app.run,

@@ -1,5 +1,7 @@
-from collector import CoverageCollector
+from manager import CollectorManager
 from client import CollectorService
+from twisted.python import log
+import sys
 
 class RegularBus:
     """
@@ -7,19 +9,17 @@ class RegularBus:
     bus.start_trace()
     """
 
-    def __init__(self, server, port, ignore_paths=None):
-        self.collector = CoverageCollector(ignore_paths=ignore_paths)
+    def __init__(self, server, port):
+        self.manager = CollectorManager()
         self.service = CollectorService(
-            collector=self.collector,
+            manager=self.manager,
             server=server,
             port=port,
             debug=False)
 
     def lets_go(self):
-        self.collector.start_trace()
+        log.startLogging(sys.stdout)
+        self.manager.start_trace()
         self.service.start()
 
-if __name__ == '__main__':
-    b = RegularBus('localhost', 9000)
-    b.lets_go()
-    print("trace started")
+

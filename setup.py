@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='regularbus',
-    packages=['regularbus'],
+    packages=['regularbus', 'regularbus.pycallgraph', 'regularbus.pycoverage'],
     version='0.2',
     install_requires=[
         "flask>=0.10.1",

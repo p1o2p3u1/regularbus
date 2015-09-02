@@ -10,14 +10,13 @@ import json
 class BusStation(WebSocketServerProtocol):
 
     def __init__(self):
-        self.cov_task = task.LoopingCall(self._collect_data)
+        self.cov_task = task.LoopingCall(self._collect_cov_data)
+        self.graph_task = task.LoopingCall(self._collect_graph_image)
         self.cov_interval = 1
         self.trace_filter = {}
-        self.cov_peer = None
 
     def onConnect(self, request):
         print("Client connecting: {0}".format(request.peer))
-        self.cov_peer = request.peer
 
     def onOpen(self):
         print("WebSocket connection open.")
@@ -49,7 +48,7 @@ class BusStation(WebSocketServerProtocol):
 
             self.cov_task.start(self.cov_interval)
             #  send back the current cov data for debugging
-            cov_data = self.factory.collector.harvest_data()
+            cov_data = self.factory.manager.harvest_coverage_data()
             s = json.dumps(cov_data, ensure_ascii=False).encode('utf8')
             self.sendMessage(s, False)
 
@@ -63,18 +62,6 @@ class BusStation(WebSocketServerProtocol):
                 self.cov_task.stop()
             self.cov_task.start(self.cov_interval)
 
-        elif op == "pause":
-            # pause coverage task
-            if self.cov_task and self.cov_task.running:
-                self.cov_task.stop()
-                print "coverage task paused"
-
-        elif op == "resume":
-            # resume coverage task
-            if self.cov_task and not self.cov_task.running:
-                self.cov_task.start(self.cov_interval)
-                print "coverage task resumed"
-
         elif op == "start":
             # start coverage task
             if self.cov_task and not self.cov_task.running:
@@ -87,13 +74,28 @@ class BusStation(WebSocketServerProtocol):
                 self.cov_task.stop()
                 print "coverage task stopped"
 
+        elif op == "start graph":
+            self.factory.manager.do_call_graph = True
+            self.graph_task.start(self.cov_interval)
+
+        elif op == "stop graph":
+            self.factory.manager.do_call_graph = False
+            self.graph_task.stop()
+        elif op == "clear graph":
+            self.factory.manager.clear_graph()
+        else:
+            pass
+
     def onClose(self, wasClean, code, reason):
         print("WebSocket connection closed: {0}".format(reason))
         if self.cov_task and self.cov_task.running:
             self.cov_task.stop()
+        if self.graph_task and self.graph_task.running:
+            self.graph_task.stop()
+        self.factory.manager.do_call_graph = False
 
-    def _collect_data(self):
-        cov_data = self.factory.collector.harvest_data()
+    def _collect_cov_data(self):
+        cov_data = self.factory.manager.harvest_coverage_data()
         result = {k: v for k, v in cov_data.iteritems() if k in self.trace_filter}
         # The ensure_ascii == False option allows the JSON serializer
         # to use Unicode strings. We can do this since we are encoding
@@ -102,13 +104,22 @@ class BusStation(WebSocketServerProtocol):
         s = json.dumps(result, ensure_ascii=False).encode('utf8')
         self.sendMessage(s, False)
 
+    def _collect_graph_image(self):
+        image = self.factory.manager.harvest_graph()
+        # send binary image to the client
+        self.sendMessage(image, isBinary=True)
+        # collect graph data
+        graph = self.factory.manager.harvest_call_graph_data()
+        s = json.dumps(graph, ensure_ascii=False).encode('utf8')
+        self.sendMessage(s, isBinary=False)
+
 
 class CollectorService:
 
-    def __init__(self, collector, server, port, debug):
+    def __init__(self, manager, server, port, debug):
         self.factory = WebSocketServerFactory("ws://%s:%d" % (server, port), debug=debug)
         self.factory.protocol = BusStation
-        self.factory.collector = collector
+        self.factory.manager = manager
         self.reactor = reactor
         self.reactor.listenTCP(port, self.factory)
         self.thread = Thread(target=self.reactor.run, args=(False,))
